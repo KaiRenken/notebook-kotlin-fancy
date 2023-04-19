@@ -1,20 +1,18 @@
 package de.neusta.notebookkotlinfancy.infrastructure.rest
 
+import com.ninjasquad.springmockk.MockkBean
 import de.neusta.notebookkotlinfancy.application.NoteCreation
 import de.neusta.notebookkotlinfancy.domain.NoteRepository
-import de.neusta.notebookkotlinfancy.testdatafactories.NoteTestDataFactory.Companion.aTestNote
+import de.neusta.notebookkotlinfancy.testdatafactories.aTestNote
+import io.mockk.every
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import java.lang.String
 import java.time.format.DateTimeFormatter
-import java.util.List
 
 @WebMvcTest(NoteController::class)
 class NoteControllerTest {
@@ -22,34 +20,30 @@ class NoteControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
 
-    @MockBean
+    @MockkBean
     private lateinit var noteCreationMock: NoteCreation
 
-    @MockBean
+    @MockkBean
     private lateinit var noteRepositoryMock: NoteRepository
 
     @Test
     fun createNote() {
-        val createdNote = aTestNote().build()
+        val createdNote = aTestNote()
         val requestBody = """
                 {
-                    "content": "test-content"
+                    "content": "${createdNote.content}"
                 }
                 """
-        val expectedResponse = String.format(
-            """
+        val expectedResponse = """
                 {
-                    "id": "%s",
-                    "creationDate": "%s",
-                    "content": "%s"
+                    "id": "${createdNote.id}",
+                    "creationDate": "${createdNote.creationDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS"))}",
+                    "content": "${createdNote.content}"
                 }
-                """,
-            createdNote.id,
-            createdNote.creationDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")),
-            createdNote.content
-        )
+                """
 
-        `when`(noteCreationMock.createNote("test-content")).thenReturn(createdNote)
+        every { noteCreationMock.createNote(createdNote.content) }
+            .returns(createdNote)
 
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/note")
@@ -62,32 +56,24 @@ class NoteControllerTest {
 
     @Test
     fun retrieveAllNotes() {
-        val note1 = aTestNote().withContent("test-content-1").build()
-        val note2 = aTestNote().withContent("test-content-2").build()
-        val expectedResponse = String.format(
-            """
+        val note1 = aTestNote(content = "test-content-1")
+        val note2 = aTestNote(content = "test-content-2")
+        val expectedResponse = """
                 [
                     {
-                        "id": "%s",
-                        "creationDate": "%s",
-                        "content": "%s"
+                        "id": "${note1.id}",
+                        "creationDate": "${note1.creationDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS"))}",
+                        "content": "${note1.content}"
                     },
                     {
-                        "id": "%s",
-                        "creationDate": "%s",
-                        "content": "%s"
+                        "id": "${note2.id}",
+                        "creationDate": "${note2.creationDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS"))}",
+                        "content": "${note2.content}"
                     }
                 ]
-                """,
-            note1.id,
-            note1.creationDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")),
-            note1.content,
-            note2.id,
-            note2.creationDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")),
-            note2.content
-        )
+                """
 
-        `when`(noteRepositoryMock.findAll()).thenReturn(List.of(note1, note2))
+        every { noteRepositoryMock.findAll() }.returns(listOf(note1, note2))
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/note"))
             .andExpect(status().isOk)

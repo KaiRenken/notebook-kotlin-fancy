@@ -1,11 +1,13 @@
 package de.neusta.notebookkotlinfancy.domain
 
-import org.assertj.core.api.Assertions.*
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.date.shouldBeWithin
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.Duration
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 import java.util.*
 
 @DisplayName("Create Note")
@@ -19,10 +21,8 @@ class NoteTest {
         fun withMinimalParameters() {
             val result = Note(content = "test-content")
 
-            assertThat(result.id).isNotNull
-            assertThat(result.creationDate)
-                .isCloseTo(LocalDateTime.now(), within(1, ChronoUnit.SECONDS))
-            assertThat(result.content).isEqualTo("test-content")
+            result.creationDate.shouldBeWithin(Duration.ofSeconds(1L), LocalDateTime.now())
+            result.content shouldBe "test-content"
         }
 
         @Test
@@ -33,17 +33,17 @@ class NoteTest {
 
             val result = Note(id, creationDate, content)
 
-            assertThat(result.id).isEqualTo(id)
-            assertThat(result.creationDate).isEqualTo(creationDate)
-            assertThat(result.content).isEqualTo(content)
+            result.id shouldBe id
+            result.creationDate shouldBe creationDate
+            result.content shouldBe content
         }
     }
 
     @Test
     fun `with invalid content`() {
-        assertThatThrownBy { Note(content = " ") }.isInstanceOf(
-            IllegalArgumentException::class.java
-        )
-            .hasMessage("Content must not be blank")
+        shouldThrow<IllegalArgumentException> {
+            Note(content = " ")
+        }
+            .message shouldBe "Content must not be blank"
     }
 }
