@@ -1,29 +1,29 @@
 package de.neusta.notebookkotlinfancy.application
 
 import de.neusta.notebookkotlinfancy.domain.NoteRepository
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
+import de.neusta.notebookkotlinfancy.matchers.shouldBeEqualTo
+import de.neusta.notebookkotlinfancy.testdatafactories.aTestNote
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 
 class NoteCreationTest {
 
-    private val noteRepositoryMock = mock(NoteRepository::class.java)
+    private val noteRepositoryMock: NoteRepository = mockk()
 
     private val noteCreationToTest = NoteCreation(noteRepositoryMock)
 
     @Test
     fun createNote() {
-        val content = "test-content"
-        val result = noteCreationToTest.createNote(content)
-        assertThat(result.id).isNotNull
-        assertThat(result.creationDate)
-            .isCloseTo(LocalDateTime.now(), within(1, ChronoUnit.SECONDS))
-        assertThat(result.content).isEqualTo("test-content")
+        val testNote = aTestNote()
+        val result = noteCreationToTest.createNote(testNote.content)
 
-        verify(noteRepositoryMock).store(result)
+        result shouldBeEqualTo testNote
+
+        verify {
+            noteRepositoryMock.store(withArg {
+                it shouldBeEqualTo testNote
+            })
+        }
     }
 }
