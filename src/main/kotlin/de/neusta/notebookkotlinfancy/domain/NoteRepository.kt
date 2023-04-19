@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository
 @Repository
 interface NoteRepository {
 
-    fun store(note: Note)
+    fun store(note: Note): Note
 
     fun findAll(): List<Note>
 }

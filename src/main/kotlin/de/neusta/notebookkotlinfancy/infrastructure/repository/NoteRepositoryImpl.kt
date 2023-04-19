@@ -8,20 +8,31 @@ import org.springframework.stereotype.Repository
 @Repository
 class NoteRepositoryImpl(private val noteJpaRepository: NoteJpaRepository) : NoteRepository {
 
-    override fun store(note: Note) {
-        noteJpaRepository.save(mapToEntity(note))
-    }
+    override fun store(note: Note): Note =
+        note
+            .toEntity()
+            .saveToDb()
+            .toDomain()
 
-    override fun findAll(): List<Note> {
-        return noteJpaRepository.findAll()
-            .map { noteEntity -> mapToDomain(noteEntity) }
-    }
+    override fun findAll(): List<Note> =
+        noteJpaRepository
+            .findAll()
+            .toDomain()
 
-    private fun mapToDomain(noteEntity: NoteEntity): Note {
-        return Note(noteEntity.id, noteEntity.creationDate, noteEntity.content)
-    }
+    private fun Note.toEntity(): NoteEntity = NoteEntity(
+        id = this.id,
+        creationDate = this.creationDate,
+        content = this.content,
+    )
 
-    private fun mapToEntity(note: Note): NoteEntity {
-        return NoteEntity(note.id, note.creationDate, note.content)
-    }
+    private fun NoteEntity.saveToDb(): NoteEntity = noteJpaRepository.save(this)
+
+    private fun NoteEntity.toDomain(): Note = Note(
+        id = this.id,
+        creationDate = this.creationDate,
+        content = this.content,
+    )
+
+    private fun List<NoteEntity>.toDomain(): List<Note> =
+        this.map { it.toDomain() }
 }

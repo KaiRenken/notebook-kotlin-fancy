@@ -7,11 +7,12 @@ import org.springframework.stereotype.Service
 @Service
 class NoteCreation(private val noteRepository: NoteRepository) {
 
-    fun createNote(content: String): Note {
-        val createdNote = Note(content = content)
+    fun createNote(content: String): Note =
+        content
+            .createDomainObject()
+            .storeToDatabase()
 
-        noteRepository.store(createdNote)
+    private fun String.createDomainObject(): Note = Note(content = this)
 
-        return createdNote
-    }
+    private fun Note.storeToDatabase(): Note = noteRepository.store(this)
 }

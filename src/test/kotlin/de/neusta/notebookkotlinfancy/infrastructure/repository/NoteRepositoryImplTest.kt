@@ -4,6 +4,7 @@ import de.neusta.notebookkotlinfancy.matchers.shouldBeEqualTo
 import de.neusta.notebookkotlinfancy.testcontainers.AbstractDatabaseTest
 import de.neusta.notebookkotlinfancy.testdatafactories.aTestNote
 import de.neusta.notebookkotlinfancy.testdatafactories.aTestNoteEntity
+import io.kotest.matchers.equality.shouldBeEqualToComparingFields
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,7 +21,7 @@ class NoteRepositoryImplTest : AbstractDatabaseTest() {
     fun storeNote() {
         val noteToStore = aTestNote()
 
-        noteRepositoryImpl.store(noteToStore)
+        noteRepositoryImpl.store(noteToStore) shouldBeEqualToComparingFields noteToStore
 
         noteJpaRepository.count() shouldBe 1
         noteJpaRepository.findAll()[0] shouldBeEqualTo noteToStore
