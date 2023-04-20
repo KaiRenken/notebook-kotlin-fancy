@@ -18,26 +18,32 @@ class NoteController(
     private val noteRepository: NoteRepository,
 ) {
     @PostMapping("/api/note")
-    fun createNote(@RequestBody createNoteDto: CreateNoteDto): ResponseEntity<ReadNoteDto> {
-        val creationResult = noteCreation.createNote(createNoteDto.content)
-        return ResponseEntity(mapToDto(creationResult), HttpStatus.CREATED)
-    }
+    fun createNote(@RequestBody createNoteDto: CreateNoteDto): ResponseEntity<ReadNoteDto> =
+        createNoteDto
+            .callCreationUseCase()
+            .toReadNoteDto()
+            .wrapInCreatedResponse()
 
     @GetMapping("/api/note")
-    fun retrieveAllNotes(): ResponseEntity<List<ReadNoteDto>> {
-        val retrievedNotes = noteRepository.findAll()
-        return ResponseEntity(mapToDto(retrievedNotes), HttpStatus.OK)
-    }
+    fun retrieveAllNotes(): ResponseEntity<List<ReadNoteDto>> =
+        noteRepository
+            .findAll()
+            .toReadNoteDto()
+            .wrapInOkResponse()
 
-    private fun mapToDto(note: Note): ReadNoteDto {
-        return ReadNoteDto(
-            note.id,
-            note.creationDate,
-            note.content,
-        )
-    }
+    private fun CreateNoteDto.callCreationUseCase(): Note = noteCreation.createNote(this.content)
 
-    private fun mapToDto(notes: List<Note>): List<ReadNoteDto> {
-        return notes.map { note -> mapToDto(note) }
-    }
+    private fun ReadNoteDto.wrapInCreatedResponse(): ResponseEntity<ReadNoteDto> =
+        ResponseEntity(this, HttpStatus.CREATED)
+
+    private fun Note.toReadNoteDto(): ReadNoteDto = ReadNoteDto(
+        id = this.id,
+        creationDate = this.creationDate,
+        content = this.content,
+    )
+
+    private fun List<Note>.toReadNoteDto(): List<ReadNoteDto> = this.map { it.toReadNoteDto() }
+
+    private fun List<ReadNoteDto>.wrapInOkResponse(): ResponseEntity<List<ReadNoteDto>> =
+        ResponseEntity(this, HttpStatus.OK)
 }
